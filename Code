@@ -1,0 +1,188 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class playercontrol : MonoBehaviour
+{
+    private Animator playerAnimator;
+    private Rigidbody2D rb;
+
+    private bool istrigger, jumpTrigger;
+
+    private bool slide;
+
+    [SerializeField]
+    private float NinjaSpeed;
+
+    [SerializeField]
+    private float JumpForce;
+    
+    [SerializeField]
+    private Transform[] GroundPoints;
+
+    [SerializeField]
+    private float groundRadius;
+
+    private LayerMask WhatIsGround;
+
+    private bool grounded;
+
+    private bool jumping;
+
+    
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        playerAnimator = GetComponent<Animator>();
+        istrigger = false;
+        jumpTrigger = false;
+        slide = false;
+       // jumpHieght = 0.5f;
+    }
+        
+    void Update()
+    {
+        HandleInput();
+        Debug.Log("Inside update ");
+    }
+
+    // Update is called once per frame
+    void FixedUpdate()
+    {
+        float horizontal = Input.GetAxis("Horizontal");
+        
+        grounded = isGrounded();
+
+        HandleMovement(horizontal);
+        
+        Flip(horizontal);
+
+        HandleSlide();
+        
+       // HandleJumps();
+        
+        handleAttacks();
+        
+        ResetValues();
+        Debug.Log("Inside fixed update ");
+    }
+
+    private void HandleMovement(float horizontal)
+    {
+        if (!this.playerAnimator.GetCurrentAnimatorStateInfo(0).IsTag("Attack"))
+        {
+            rb.velocity = new Vector2(horizontal * NinjaSpeed,rb.velocity.y);
+     //       Debug.Log("horizontal value =" + horizontal);
+        }
+        
+        playerAnimator.SetFloat("speed", Mathf.Abs(horizontal));
+
+    }
+
+    //if(isGrounded && jumping)
+    //{
+        //isGrounded = false;
+        //playerAnimator.SetTrigger("jumpTrigger-a");
+        //rb.AddForce(new Vector2(0,JumpForce));
+    //}
+
+    private void HandleSlide()
+    {
+        if (slide)
+        {
+            playerAnimator.SetBool("slideBool", true);
+        }
+        else
+        {
+            
+            playerAnimator.SetBool("slideBool", false);
+        }
+    }
+
+    private void handleAttacks()
+    {
+       
+        if (istrigger && !this.playerAnimator.GetCurrentAnimatorStateInfo(0).IsTag("Attack"))
+        {
+            playerAnimator.SetTrigger("attackTrigger");
+            rb.velocity = Vector2.zero;
+            
+        }
+        
+            Debug.Log("inside handle attack 2");
+    }
+
+    private void ResetValues()
+    {
+        istrigger = false;
+        jumpTrigger = false;
+    }
+
+    private void HandleInput()
+    {
+        if (Input.GetKeyDown(KeyCode.KeypadEnter))
+        {
+            istrigger = true;
+       //     Debug.Log("Enter key detected");
+        }
+    
+        //slide
+        if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            slide = true;
+            Debug.Log("Down key detected");
+        }
+        else
+        {
+            slide = false;
+        }
+        // form here jump code starts
+        if (Input.GetKeyDown("space"))
+        {
+            jumpTrigger = true;
+        }
+        // jump code ends
+        
+    //    Debug.Log("Enter Key = " + Input.GetKeyDown(KeyCode.KeypadEnter));
+        Debug.Log("Down Key = " + Input.GetKeyDown(KeyCode.DownArrow));
+        Debug.Log("LeftArrow Key = " + Input.GetKeyDown(KeyCode.LeftArrow));
+    }
+
+    private void Flip(float horizontal)
+    {
+        Vector3 position;
+        position = transform.localScale;
+        
+        if (horizontal > 0)
+        {
+            position.x = 1;
+            transform.localScale = position;
+
+        }
+        
+       if(horizontal < 0)
+       {
+          position.x = -1;
+          transform.localScale = position;
+       }
+    }
+
+    private bool isGrounded()
+    {
+    if(rb.velocity.y <= 0)
+        {
+        foreach (Transform point in GroundPoints)
+            {
+                Collider2D[] colliders = Physics2D.OverlapCircleAll(point.position, groundRadius, WhatIsGround);
+                for (int i = 0; i < colliders.Length; i++)  
+                {
+                    if(colliders[i].gameObject != gameObject)
+                    {
+                    return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+}
